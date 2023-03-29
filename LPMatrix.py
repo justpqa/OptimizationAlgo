@@ -14,6 +14,7 @@ class LPMatrix:
             self.c[i] = -vecc[i]
         self.z = z
         self.bounded = True
+        self.feasible = True
         self.x = vecx
         self.isMax = 1 if isMax else 0
     
@@ -75,6 +76,19 @@ class LPMatrix:
         minus = self.productNumVec(self.c[col], self.A[row])
         self.c = self.minusVec(self.c, minus)
     
+    def checkFeasible(self):
+        for i in range(len(self.x)):
+            if "a" in self.x[i]:
+                arr = [self.A[j][i] for j in range(len(self.A))]
+                d = Counter(arr)
+                if d[1] == 1 and d[0] == len(arr) - 1:
+                    inx = arr.index(1)
+                    if self.b[inx] == 0:
+                        continue
+                    else:
+                        return False
+        return True
+    
     def simplexAlg(self):
         while self.findCol() != -1:
             c = self.findCol()
@@ -84,18 +98,23 @@ class LPMatrix:
                 break
             else:
                 self.simplexPivot(r, c)
+        self.feasible = self.checkFeasible()
     
+
     def getRes(self):
-        if self.bounded:
-            print("Optimized value: " + str(self.z))
-            for i in range(len(self.x)):
-                arr = [self.A[j][i] for j in range(len(self.A))]
-                d = Counter(arr)
-                if d[1] == 1 and d[0] == len(arr) - 1:
-                    inx = arr.index(1)
-                    val = self.b[inx]
-                    print("Value of " + str(self.x[i]) + " is: " + str(round(val,2)))
-                else:
-                    print("Value of " + str(self.x[i]) + " is: 0") 
+        if not self.bounded:
+            print("The objective function is unbounded.")
         else:
-            print("The objective function is unbounded.")  
+            if not self.feasible:
+                print("The LP is not feasible.")
+            else:
+                print("Optimized value: " + str(self.z))
+                for i in range(len(self.x)):
+                    arr = [self.A[j][i] for j in range(len(self.A))]
+                    d = Counter(arr)
+                    if d[1] == 1 and d[0] == len(arr) - 1:
+                        inx = arr.index(1)
+                        val = self.b[inx]
+                        print("Value of " + str(self.x[i]) + " is: " + str(round(val,2)))
+                    else:
+                        print("Value of " + str(self.x[i]) + " is: 0") 
