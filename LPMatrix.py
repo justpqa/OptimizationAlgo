@@ -3,10 +3,11 @@
 # This will only deal with condition that is already inequality
 from collections import Counter
 from copy import deepcopy
+from typing import List
 
 # comment in 3/27/2023: need to check when will we have unbounded objective function
 class LPMatrix:
-    def __init__(self, matA, vecb, vecc, vecx, isMax = True, z = 0):
+    def __init__(self, matA, vecb, vecc, vecx, isMax = True, z = 0) -> None:
         self.A = matA
         self.b = vecb
         self.c = [0] * len(vecc)
@@ -20,7 +21,7 @@ class LPMatrix:
     
     # for the tableau already in equality spot
     # find the next spot for pivoting
-    def findCol(self):
+    def findCol(self) -> int:
         minNeg = 0
         maxPos = 0
         inx = -1
@@ -36,7 +37,7 @@ class LPMatrix:
                     inx = i
         return inx # if inx = -1 => we will know that our function has reached optimized value
     
-    def findRow(self, col):
+    def findRow(self, col: int) -> int:
         minRatio = 99999
         inx = -1
         for i in range(len(self.A)):
@@ -52,19 +53,19 @@ class LPMatrix:
                     continue
         return inx 
     
-    def productNumVec(self, num, vec):
+    def productNumVec(self, num: int, vec: List[int]) -> List[int]:
         res = deepcopy(vec)
         for i in range(len(vec)):
             res[i] *= num
         return res
     
-    def minusVec(self, vec1, vec2):
+    def minusVec(self, vec1: List[int], vec2: List[int]) -> List[int]:
         res = [0] * len(vec1)
         for i in range(len(vec1)):
             res[i] = vec1[i] - vec2[i]
         return res
     
-    def simplexPivot(self, row, col):
+    def simplexPivot(self, row: int, col: int) -> None:
         self.b[row] *= 1/(self.A[row][col])
         self.A[row] = self.productNumVec(1/(self.A[row][col]), self.A[row])
         for i in range(len(self.A)):
@@ -76,7 +77,7 @@ class LPMatrix:
         minus = self.productNumVec(self.c[col], self.A[row])
         self.c = self.minusVec(self.c, minus)
     
-    def checkFeasible(self):
+    def checkFeasible(self) -> bool:
         for i in range(len(self.x)):
             if "a" in self.x[i]:
                 arr = [self.A[j][i] for j in range(len(self.A))]
@@ -89,7 +90,7 @@ class LPMatrix:
                         return False
         return True
     
-    def simplexAlg(self):
+    def simplexAlg(self) -> None:
         while self.findCol() != -1:
             c = self.findCol()
             r = self.findRow(c)
@@ -101,7 +102,7 @@ class LPMatrix:
         self.feasible = self.checkFeasible()
     
 
-    def getRes(self):
+    def getRes(self) -> None:
         if not self.bounded:
             print("The objective function is unbounded.")
         else:
