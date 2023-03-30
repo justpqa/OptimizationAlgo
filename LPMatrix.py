@@ -7,7 +7,7 @@ from typing import List
 
 # comment in 3/27/2023: need to check when will we have unbounded objective function
 class LPMatrix:
-    def __init__(self, matA, vecb, vecc, vecx, isMax = True, z = 0) -> None:
+    def __init__(self, matA: List[List[int]], vecb: List[int], vecc: List[int], vecx: List[str], isMax :bool = True, z: int = 0) -> None:
         self.A = matA
         self.b = vecb
         self.c = [0] * len(vecc)
