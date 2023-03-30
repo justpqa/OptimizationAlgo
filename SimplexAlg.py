@@ -6,7 +6,7 @@ from LPMatrix import LPMatrix
 # bugs regarding the artificial variable and the big M method: we can only deal with coefficient smaller than 10^7, 
 # so that we can use a value of M = 10^9
 
-def TexttoDict(s) -> dict:
+def TexttoDict(s: str) -> dict:
     # how to separate into same list as lst
     start = end = 0
     lst = []
