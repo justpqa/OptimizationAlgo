@@ -66,7 +66,7 @@ def getLPMatrix():
             varName = "e" + str(excessInx)
             constraintDict[varName] = -1
             varName = "a" + str(artificialInx)
-            constraintDict[varName] = 1
+            constraintDict[varName] = -10**9 if max else 10**9
             del constraintDict["sign"]
             constraint[i] = constraintDict
             vecx = set(list(vecx) + list(constraintDict.keys()))
@@ -80,7 +80,7 @@ def getLPMatrix():
             varName = "e" + str(excessInx)
             constraintDict2[varName] = -1
             varName = "a" + str(artificialInx)
-            constraintDict[varName] = 1
+            constraintDict[varName] = -10**9 if max else 10**9
             del constraintDict2["sign"]
             # need to add 2 constraint instead of 1
             constraint[i] = constraintDict1
