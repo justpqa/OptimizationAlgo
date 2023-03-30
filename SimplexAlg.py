@@ -6,7 +6,7 @@ from LPMatrix import LPMatrix
 # bugs regarding the artificial variable and the big M method: we can only deal with coefficient smaller than 10^7, 
 # so that we can use a value of M = 10^9
 
-def TexttoDict(s):
+def TexttoDict(s) -> dict:
     # how to separate into same list as lst
     start = end = 0
     lst = []
@@ -56,7 +56,7 @@ def TexttoDict(s):
             continue
     return d
 
-def getLPMatrix():
+def InputtoLPMatrix() -> LPMatrix:
     # first we get the dictionary for objective function
     objDict = TexttoDict(input("Enter the objective function: "))
     
@@ -147,6 +147,6 @@ def getLPMatrix():
     return LPMatrix(matA, vecb, vecc, vecx, max)
 
 if __name__ == "__main__":
-    mat = getLPMatrix()
+    mat = InputtoLPMatrix()
     mat.simplexAlg()
     mat.getRes()
