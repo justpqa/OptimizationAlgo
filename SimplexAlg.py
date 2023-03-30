@@ -7,9 +7,33 @@ from LPMatrix import LPMatrix
 # so that we can use a value of M = 10^9
 
 def TexttoDict(s):
-    lst = s.split(" ")
-    for i in range(len(lst)):
-        lst[i] = lst[i].replace(" ", "")
+    # how to separate into same list as lst
+    start = end = 0
+    lst = []
+    while end < len(s):
+        if s[end] in ["+", "-", "="]:
+            temp1 = s[start:end]
+            temp2 = s[end]
+            temp1 = temp1.replace(" ", "")
+            lst.append(temp1)
+            lst.append(temp2)
+            end += 1
+            start = end
+        elif s[end] in [">", "<"]:
+            temp1 = s[start:end]
+            temp2 = s[end:end+2]
+            temp1 = temp1.replace(" ", "")
+            lst.append(temp1)
+            lst.append(temp2)
+            end += 2
+            start = end
+        elif end == len(s) - 1:
+            temp = s[start:]
+            temp = temp.replace(" ", "")
+            lst.append(temp)
+            end += 1
+        else:
+            end += 1
     d = {}
     if (">=" in lst) or ("<=" in lst) or ("=" in lst): 
         d["lhs"] = int(lst.pop())
