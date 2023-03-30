@@ -90,7 +90,7 @@ def InputtoLPMatrix() -> LPMatrix:
             varName = "e" + str(excessInx)
             constraintDict[varName] = -1
             varName = "a" + str(artificialInx)
-            constraintDict[varName] = -10**9 if max else 10**9
+            constraintDict[varName] = 1
             del constraintDict["sign"]
             constraint[i] = constraintDict
             vecx = set(list(vecx) + list(constraintDict.keys()))
@@ -104,7 +104,7 @@ def InputtoLPMatrix() -> LPMatrix:
             varName = "e" + str(excessInx)
             constraintDict2[varName] = -1
             varName = "a" + str(artificialInx)
-            constraintDict[varName] = -10**9 if max else 10**9
+            constraintDict[varName] = 1
             del constraintDict2["sign"]
             # need to add 2 constraint instead of 1
             constraint[i] = constraintDict1
@@ -123,7 +123,7 @@ def InputtoLPMatrix() -> LPMatrix:
     # add artificial variable to objective function in big M method:
     for var in vecx:
         if "a" in var:
-            objDict[var] = 1000000000
+            objDict[var] = -1000000000 if max else 1000000000
 
     # with the number of constraints and the number of variables, we create the component for the LPMatrix
     vecc = [0] * numVar
