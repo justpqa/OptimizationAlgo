@@ -106,12 +106,19 @@ class InteriorMat:
             x = np.add(x, delta_x)
             y = np.add(y, delta_y)
             duality_gap = (np.matmul(np.transpose(c), x)[0][0]  - np.matmul(np.transpose(b), y)[0][0]) / (1 + np.abs(np.matmul(np.transpose(b), y)[0][0]))
+            u /= 10
             # dunno if this gonna work though as it is 2am already!!!
         
+        if duality_gap != 0:
+            self.feasible = False
         self.res = x[0]
         self.z = np.matmul(np.transpose(c), x)[0][0]
+        dualMat.z = np.matmul(np.transpose(b), y)[0][0]
     
     def getRes(self) -> None:
-        print("Optimized value: " + str(self.z))
-        for i in range(len(self.x)):
-            print("Value of " + str(self.x[i]) + " is: " + str(round(self.res[i],2)))
+        if not self.feasible:
+                print("The LP is not feasible.")
+        else:
+            print("Optimized value: " + str(self.z))
+            for i in range(len(self.x)):
+                print("Value of " + str(self.x[i]) + " is: " + str(round(self.res[i],2)))
