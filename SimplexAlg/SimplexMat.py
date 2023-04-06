@@ -6,8 +6,8 @@ from copy import deepcopy
 from typing import List
 
 # comment in 3/27/2023: need to check when will we have unbounded objective function
-class LPMatrix:
-    def __init__(self, matA: List[List[int]], vecb: List[int], vecc: List[int], vecx: List[str], isMax: bool = True, z: int = 0) -> None:
+class SimplexMat:
+    def __init__(self, matA: List[List[int]], vecb: List[int], vecc: List[int], vecx: List[str], signvec: List[str], isMax: bool = True, z: int = 0) -> None:
         self.A = matA
         self.b = vecb
         self.c = [0] * len(vecc)
@@ -18,6 +18,10 @@ class LPMatrix:
         self.feasible = True
         self.x = vecx
         self.isMax = 1 if isMax else 0
+        self.s = signvec
+        self.numSurplus = 0
+        self.numExcess = 0
+        self.numArtificial = 0
     
     # for the tableau already in equality spot
     # find the next spot for pivoting
@@ -65,6 +69,56 @@ class LPMatrix:
             res[i] = vec1[i] - vec2[i]
         return res
     
+    # modify from ineq to eq at condition inx (0-indexed array)
+    def IneqtoEq(self, inx) -> None:
+        # only add surplus and excess
+        if self.s[inx] == "<=":
+            self.numSurplus += 1
+            varName = "s" + str(self.numSurplus)
+            self.x.append(varName)
+            self.c.append(0)
+            for i in range(len(self.A)):
+                if i == inx:
+                    self.A[i].append(1)
+                else:
+                    self.A[i].append(0)
+            self.s[inx] = "="
+        else:
+            self.numExcess += 1
+            varName = "e" + str(self.numExcess)
+            self.x.append(varName)
+            self.c.append(0)
+            self.numArtificial += 1
+            varName = "a" + str(self.numExcess)
+            self.x.append(varName)
+            self.c.append(1000000000)
+            for i in range(len(self.A)):
+                if i == inx:
+                    self.A[i].append(-1)
+                    self.A[i].append(1)
+                else:
+                    self.A[i].append(0)
+                    self.A[i].append(0)
+            self.s[inx] = "="
+    
+    def convertStandard(self) -> None:
+        if self.isMax:
+            # all of them will be treated to >=
+            for i in range(len(self.s)):
+                if self.s[i] == ">=":
+                    self.A[i] = self.productNumVec(-1, self.A[i])
+                    self.b[i] *= -1
+                    self.s[i] = "<="
+                self.IneqtoEq(i)
+        else:
+            # all of them will be treated to <=
+            for i in range(len(self.s)):
+                if self.s[i] == "<=":
+                    self.A[i] = self.productNumVec(-1, self.A[i])
+                    self.b[i] *= -1
+                    self.s[i] = ">="
+                self.IneqtoEq(i)
+
     def simplexPivot(self, row: int, col: int) -> None:
         self.b[row] *= 1/(self.A[row][col])
         self.A[row] = self.productNumVec(1/(self.A[row][col]), self.A[row])
@@ -91,6 +145,7 @@ class LPMatrix:
         return True
     
     def simplexAlg(self) -> None:
+        self.convertStandard()
         while self.findCol() != -1:
             c = self.findCol()
             r = self.findRow(c)
@@ -111,11 +166,12 @@ class LPMatrix:
             else:
                 print("Optimized value: " + str(self.z))
                 for i in range(len(self.x)):
-                    arr = [self.A[j][i] for j in range(len(self.A))]
-                    d = Counter(arr)
-                    if d[1] == 1 and d[0] == len(arr) - 1:
-                        inx = arr.index(1)
-                        val = self.b[inx]
-                        print("Value of " + str(self.x[i]) + " is: " + str(round(val,2)))
-                    else:
-                        print("Value of " + str(self.x[i]) + " is: 0") 
+                    if "x" in self.x[i]:
+                        arr = [self.A[j][i] for j in range(len(self.A))]
+                        d = Counter(arr)
+                        if d[1] == 1 and d[0] == len(arr) - 1:
+                            inx = arr.index(1)
+                            val = self.b[inx]
+                            print("Value of " + str(self.x[i]) + " is: " + str(round(val,2)))
+                        else:
+                            print("Value of " + str(self.x[i]) + " is: 0") 

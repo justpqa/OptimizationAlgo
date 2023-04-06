@@ -1,6 +1,6 @@
 # This file will help convert inequlity to equality
 import string
-from SimplexAlg.LPMatrix import LPMatrix
+from InteriorMat import InteriorMat
 
 # the objective function is only a linear combination of all variables
 # bugs regarding the artificial variable and the big M method: we can only deal with coefficient smaller than 10^7, 
@@ -56,7 +56,7 @@ def TexttoDict(s: str) -> dict:
             continue
     return d
 
-def InputtoLPMatrix() -> LPMatrix:
+def InputtoLPMatrix() -> InteriorMat:
     # first we get the dictionary for objective function
     objDict = TexttoDict(input("Enter the objective function: "))
     
@@ -70,51 +70,29 @@ def InputtoLPMatrix() -> LPMatrix:
     n =  int(input("Enter number of constraints: "))
     constraint = [""] * n
 
-    # create number of surplus and excess variables in order to start create surplus and excess variable
-    surplusInx = 1
-    excessInx = 1
-    artificialInx = 1
+    # initialize sign vector
+    signvec = [""] * n
 
+    curr_n = n
     # get n constraints
-    curr_n = n # what if n is updated? we use this one instead
     for i in range(curr_n):
         constraintDict = TexttoDict(input("Enter constraint number {}: ".format(i+1)))
-        if constraintDict["sign"] == "<=":
-            varName = "s" + str(surplusInx)
-            constraintDict[varName] = 1
-            del constraintDict["sign"]
-            constraint[i] = constraintDict
-            vecx = set(list(vecx) + list(constraintDict.keys()))
-            surplusInx += 1
-        elif constraintDict["sign"] == ">=":
-            varName = "e" + str(excessInx)
-            constraintDict[varName] = -1
-            varName = "a" + str(artificialInx)
-            constraintDict[varName] = 1
-            del constraintDict["sign"]
-            constraint[i] = constraintDict
-            vecx = set(list(vecx) + list(constraintDict.keys()))
-            excessInx += 1
-            artificialInx += 1
-        else:
-            constraintDict1, constraintDict2 = constraintDict, constraintDict
-            varName = "s" + str(surplusInx)
-            constraintDict1[varName] = 1
+        if constraintDict["sign"] == "=":
+            constraintDict1 = constraintDict2 = constraintDict
+            signvec[i] = ">="
             del constraintDict1["sign"]
-            varName = "e" + str(excessInx)
-            constraintDict2[varName] = -1
-            varName = "a" + str(artificialInx)
-            constraintDict[varName] = 1
-            del constraintDict2["sign"]
-            # need to add 2 constraint instead of 1
             constraint[i] = constraintDict1
-            constraint.append(constraintDict2) # add this to the end
-            n += 1 # update n to get the latest number of constraint
-            vecx = set(list(vecx) + list(constraintDict1.keys()) + list(constraintDict2.keys()))
-            surplusInx += 1
-            excessInx += 1
-            artificialInx += 1
-    
+            signvec.append("<=")
+            del constraintDict2["sign"]
+            constraint.append(constraintDict2)
+            n += 1
+            vecx = set(list(vecx) + list(constraintDict1.keys()))
+        else:
+            signvec[i] = constraintDict["sign"]
+            del constraintDict["sign"]
+            constraint[i] = constraintDict
+            vecx = set(list(vecx) + list(constraintDict.keys()))
+
     # some format to make vecx the right type
     vecx.remove("lhs")
     vecx = list(vecx)
@@ -144,9 +122,4 @@ def InputtoLPMatrix() -> LPMatrix:
                 inx = vecx.index(key)
                 matA[i][inx] = constraint[i][key]
 
-    return LPMatrix(matA, vecb, vecc, vecx, max)
-
-if __name__ == "__main__":
-    mat = InputtoLPMatrix()
-    mat.simplexAlg()
-    mat.getRes()
+    return InteriorMat(matA, vecb, vecc, vecx, signvec, max)
