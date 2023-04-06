@@ -1,6 +1,6 @@
 # This file will help convert inequlity to equality
 import string
-from LPMatrix import LPMatrix
+from SimplexAlg.LPMatrix import LPMatrix
 
 # the objective function is only a linear combination of all variables
 # bugs regarding the artificial variable and the big M method: we can only deal with coefficient smaller than 10^7, 
