@@ -48,7 +48,7 @@ class InteriorMat:
         At = dualMat.A # n * m
         # must choose sth inside the feasible region as we need it to start work on our algorithm
         x = np.transpose(np.asmatrix([[0.1 for i in range(n)]])) # n*1
-        y = np.transpose(np.asmatrix([[0.1 for i in range(m)]])) # m*1
+        y = np.abs(np.matmul(A, x) - self.b)
         b = self.b # m * 1
         c = dualMat.b # n * 1
         if self.isMax:
@@ -61,11 +61,18 @@ class InteriorMat:
             z = -np.reshape(np.ones(n), (n, 1)) # n*1
             W = -np.identity(m)
             Z = -np.identity(n)
-        X = np.diag(x)
-        Y = np.diag(y)
-        duality_gap = ((np.matmul(np.transpose(c), x)[0,0]  - np.matmul(np.transpose(b), y)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
+        X = np.zeros((n,n))
+        for i in range(n):
+            X[i,i] = x[i]
+        Y = np.zeros((m,m))
+        for i in range(m):
+            Y[i,i] = x[i]
+        duality_gap = ((np.matmul(np.transpose(b), y)[0,0] - np.matmul(np.transpose(c), x)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
+        print(duality_gap)
         u = 1.1
-        while duality_gap > 0:
+        num_iter = 0
+        while duality_gap >= 10**(-7) and num_iter < 100:
+            print(np.transpose(x))
             # now we solve for delta_x, delta_y, delta_w, delta_z (the variable in the matrix that we will solve will work this way)
             mat = np.zeros((2*n+2*m, 2*n+2*m))
             # first we fill values for delta_x
@@ -77,13 +84,13 @@ class InteriorMat:
             mat[m+2*n:, n+m:n+2*m] = Y
             mat[m:m+n, n+2*m:] = -1*np.identity(m)
             mat[m+n:m+2*n, n+2*m:] = X
-            em = np.asmatrix([[1 for i in range(m)]])
-            en = np.asmatrix([[1 for i in range(n)]])
-            rhs = np.zeros[(2*n+2*m, 1)]
-            temp = np.add(b, -np.matmul(A, np.transpose(np.array([x]))))
+            em = np.reshape([1 for i in range(m)], (m, 1))
+            en = np.reshape([1 for i in range(n)], (n, 1))
+            rhs = np.zeros((2*n+2*m, 1))
+            temp = np.add(b, -np.matmul(A,x))
             temp = np.add(temp, -w)
             rhs[:m,] = temp
-            temp = np.add(c, -np.matmul(At, np.transpose(np.array([y]))))
+            temp = np.add(c, -np.matmul(At,y))
             temp = np.add(temp, z)
             rhs[m:m+n, ] = temp
             ZX = np.matmul(Z, X)
@@ -92,19 +99,31 @@ class InteriorMat:
             WY = np.matmul(W, Y)
             temp = np.add(u*em, -np.matmul(WY, em))
             rhs[m+2*n:] = temp
-            res = np.matmul(rhs, np.linalg.inv(mat))
-            # get res and test again with new c and x
-            delta_x = res[0,:n]
-            delta_y = res[0,n:m+n]
-            x = np.add(x, delta_x)
-            y = np.add(y, delta_y)
-            duality_gap = ((np.matmul(np.transpose(c), x)[0,0]  - np.matmul(np.transpose(b), y)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
+            res = np.matmul(np.linalg.inv(mat), rhs)
+            delta_x = res[:n,]
+            delta_y = res[n:m+n,]
+            delta_w = res[m+n:2*m+n,]
+            delta_z = res[2*m+n:,]
+            theta = 0
+            x = np.add(x,theta*delta_x)
+            y = np.add(y,theta*delta_y)
+            z = np.add(z,theta*delta_z)
+            w = np.add(w,theta*delta_w)
+            for i in range(n):
+                X[i,i] = z[i]
+                Z[i,i] = x[i]
+            for i in range(m):
+                Y[i,i] = y[i]
+                W[i,i] = w[i]
+            duality_gap = ((np.matmul(np.transpose(b), y)[0,0] - np.matmul(np.transpose(c), x)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
+            print(duality_gap)
+            print(np.transpose(x))
             u /= 10
+            num_iter += 1
         
         # if duality_gap != 0:
         #     self.feasible = False
         self.res = np.transpose(x)
-        print(self.res)
         self.z = np.matmul(np.transpose(c), x)[0,0]
         dualMat.z = np.matmul(np.transpose(b), y)[0,0]
     
