@@ -51,10 +51,16 @@ class InteriorMat:
         y = np.transpose(np.asmatrix([[0.1 for i in range(m)]])) # m*1
         b = self.b # m * 1
         c = dualMat.b # n * 1
-        w = np.reshape(np.ones(m), (m, 1)) # m*1
-        z = np.reshape(np.ones(n), (n, 1)) # n*1
-        W = np.identity(m)
-        Z = np.identity(n)
+        if self.isMax:
+            w = np.reshape(np.ones(m), (m, 1)) # m*1
+            z = np.reshape(np.ones(n), (n, 1)) # n*1
+            W = np.identity(m)
+            Z = np.identity(n)
+        else:
+            w = -np.reshape(np.ones(m), (m, 1)) # m*1
+            z = -np.reshape(np.ones(n), (n, 1)) # n*1
+            W = -np.identity(m)
+            Z = -np.identity(n)
         X = np.diag(x)
         Y = np.diag(y)
         duality_gap = ((np.matmul(np.transpose(c), x)[0,0]  - np.matmul(np.transpose(b), y)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
