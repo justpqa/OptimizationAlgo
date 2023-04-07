@@ -69,6 +69,12 @@ class SimplexMat:
             res[i] = vec1[i] - vec2[i]
         return res
     
+    def addVec(self, vec1: List[int], vec2: List[int]) -> List[int]:
+        res = [0] * len(vec1)
+        for i in range(len(vec1)):
+            res[i] = vec1[i] + vec2[i]
+        return res
+    
     # modify from ineq to eq at condition inx (0-indexed array)
     def IneqtoEq(self, inx) -> None:
         # only add surplus and excess
@@ -89,9 +95,12 @@ class SimplexMat:
             self.x.append(varName)
             self.c.append(0)
             self.numArtificial += 1
-            varName = "a" + str(self.numExcess)
+            varName = "a" + str(self.numArtificial)
             self.x.append(varName)
-            self.c.append(1000000000)
+            if self.isMax:
+                self.c.append(10000000)
+            else:
+                self.c.append(-10000000)
             for i in range(len(self.A)):
                 if i == inx:
                     self.A[i].append(-1)
@@ -99,6 +108,9 @@ class SimplexMat:
                 else:
                     self.A[i].append(0)
                     self.A[i].append(0)
+            temp = self.productNumVec(-10000000, self.A[inx]) if self.isMax else self.productNumVec(10000000, self.A[inx])
+            self.c = self.addVec(self.c, temp)
+            self.z += -10000000 * self.b[inx] if self.isMax else 10000000 * self.b[inx]
             self.s[inx] = "="
     
     def convertStandard(self) -> None:

@@ -10,9 +10,13 @@ import numpy as np
 class InteriorMat:
 
     def __init__(self, matA: List[List[int]], vecb: List[int], vecc: List[int], vecx: List[str], signvec: List[str],isMax: bool = True, z: int = 0) -> None:
+        self.numVar = len(matA[0])
+        self.numCon = len(matA)
         self.A = np.asmatrix(matA)
-        self.b = np.transpose(np.asmatrix([vecb]))
-        self.c = np.asmatrix([vecc])
+        self.b = np.array(vecb)
+        self.b = np.reshape(self.b, (self.numCon, 1))
+        self.c = np.array(vecc)
+        self.c = np.reshape(self.c, (1, self.numVar))
         self.z = z
         self.bounded = True
         self.feasible = True
@@ -23,28 +27,10 @@ class InteriorMat:
         self.numSurplus = 0
         self.numExcess = 0
     
-    def convertStandard(self) -> None:
-        if self.isMax:
-            # all of them will be treated to >=
-            for i in range(len(self.s)):
-                if self.s[i] == ">=":
-                    self.A[i,] = -1 * self.A[i,]
-                    self.b[i,] = -1 * self.b[i,]
-                    self.s[i] = "<="
-                self.IneqtoEq(i)
-        else:
-            # all of them will be treated to <=
-            for i in range(len(self.s)):
-                if self.s[i] == "<=":
-                    self.A[i,] = -1 * self.A[i,]
-                    self.b[i,] = -1 * self.b[i,]
-                    self.s[i] = ">="
-                self.IneqtoEq(i)
-    
     def convertDual(self):
-        newA = np.transpose(self.A)
-        newb = np.tranpose(self.c)
-        newc = np.tranpose(self.b)
+        newA = np.transpose(self.A).tolist()
+        newb = self.c[0].tolist()
+        newc = np.reshape(self.b, len(self.b)).tolist()
         numVar = len(newA[0])
         newy = ["y" + str(i) for i in range(numVar)] 
         isMax = False if self.isMax else True
@@ -56,23 +42,24 @@ class InteriorMat:
         # maybe try to do this without numpy => not do this as this one is too long to do
         # if A is m*n (m constraints, n variables) => X, Z is n*n, W, Y is m*m
         dualMat = self.convertDual()
-        A = self.A
-        At = dualMat.A
-        x = np.asmatrix([[0.0001 for i in range(len(A))]])
-        y = np.asmatrix([[0.0001 for i in range(len(At))]])
-        n = len(x)
-        m = len(y)
-        b = self.b
-        c = dualMat.b
-        w = np.ones(len(A))
-        z = np.ones(len(At))
-        W = np.identity(len(A))
-        Z = np.identity(len(At))
+        n = self.numVar
+        m = self.numCon
+        A = self.A # m * n
+        At = dualMat.A # n * m
+        # must choose sth inside the feasible region as we need it to start work on our algorithm
+        x = np.transpose(np.asmatrix([[0.1 for i in range(n)]])) # n*1
+        y = np.transpose(np.asmatrix([[0.1 for i in range(m)]])) # m*1
+        b = self.b # m * 1
+        c = dualMat.b # n * 1
+        w = np.reshape(np.ones(m), (m, 1)) # m*1
+        z = np.reshape(np.ones(n), (n, 1)) # n*1
+        W = np.identity(m)
+        Z = np.identity(n)
         X = np.diag(x)
         Y = np.diag(y)
-        duality_gap = (np.matmul(np.transpose(c), x)[0][0]  - np.matmul(np.transpose(b), y)[0][0]) / (1 + np.abs(np.matmul(np.transpose(b), y)[0][0]))
+        duality_gap = ((np.matmul(np.transpose(c), x)[0,0]  - np.matmul(np.transpose(b), y)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
         u = 1.1
-        while duality_gap >= 10**(-6):
+        while duality_gap > 0:
             # now we solve for delta_x, delta_y, delta_w, delta_z (the variable in the matrix that we will solve will work this way)
             mat = np.zeros((2*n+2*m, 2*n+2*m))
             # first we fill values for delta_x
@@ -101,19 +88,19 @@ class InteriorMat:
             rhs[m+2*n:] = temp
             res = np.matmul(rhs, np.linalg.inv(mat))
             # get res and test again with new c and x
-            delta_x = res[:m,]
-            delta_y = res[m:m+n,]
+            delta_x = res[0,:n]
+            delta_y = res[0,n:m+n]
             x = np.add(x, delta_x)
             y = np.add(y, delta_y)
-            duality_gap = (np.matmul(np.transpose(c), x)[0][0]  - np.matmul(np.transpose(b), y)[0][0]) / (1 + np.abs(np.matmul(np.transpose(b), y)[0][0]))
+            duality_gap = ((np.matmul(np.transpose(c), x)[0,0]  - np.matmul(np.transpose(b), y)[0,0])) / (1 + np.matmul(np.transpose(b), y)[0,0])
             u /= 10
-            # dunno if this gonna work though as it is 2am already!!!
         
-        if duality_gap != 0:
-            self.feasible = False
-        self.res = x[0]
-        self.z = np.matmul(np.transpose(c), x)[0][0]
-        dualMat.z = np.matmul(np.transpose(b), y)[0][0]
+        # if duality_gap != 0:
+        #     self.feasible = False
+        self.res = np.transpose(x)
+        print(self.res)
+        self.z = np.matmul(np.transpose(c), x)[0,0]
+        dualMat.z = np.matmul(np.transpose(b), y)[0,0]
     
     def getRes(self) -> None:
         if not self.feasible:
@@ -121,4 +108,4 @@ class InteriorMat:
         else:
             print("Optimized value: " + str(self.z))
             for i in range(len(self.x)):
-                print("Value of " + str(self.x[i]) + " is: " + str(round(self.res[i],2)))
+                print("Value of " + str(self.x[i]) + " is: " + str(round(self.res[0,i],2)))

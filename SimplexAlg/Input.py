@@ -98,11 +98,6 @@ def InputtoLPMatrix() -> SimplexMat:
     vecx = list(vecx)
     numVar = len(vecx)
 
-    # add artificial variable to objective function in big M method:
-    for var in vecx:
-        if "a" in var:
-            objDict[var] = -1000000000 if max else 1000000000
-
     # with the number of constraints and the number of variables, we create the component for the LPMatrix
     vecc = [0] * numVar
     vecb = [0] * n
