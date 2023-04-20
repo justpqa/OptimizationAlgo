@@ -2,8 +2,8 @@
 # import possible library
 # This will only deal with condition that is already inequality
 from collections import Counter
-from copy import deepcopy
 from typing import List
+import MatMethod
 
 # comment in 3/27/2023: need to check when will we have unbounded objective function
 class SimplexMat:
@@ -57,24 +57,6 @@ class SimplexMat:
                     continue
         return inx 
     
-    def productNumVec(self, num: int, vec: List[int]) -> List[int]:
-        res = deepcopy(vec)
-        for i in range(len(vec)):
-            res[i] *= num
-        return res
-    
-    def minusVec(self, vec1: List[int], vec2: List[int]) -> List[int]:
-        res = [0] * len(vec1)
-        for i in range(len(vec1)):
-            res[i] = vec1[i] - vec2[i]
-        return res
-    
-    def addVec(self, vec1: List[int], vec2: List[int]) -> List[int]:
-        res = [0] * len(vec1)
-        for i in range(len(vec1)):
-            res[i] = vec1[i] + vec2[i]
-        return res
-    
     # modify from ineq to eq at condition inx (0-indexed array)
     def IneqtoEq(self, inx) -> None:
         # only add surplus and excess
@@ -108,8 +90,8 @@ class SimplexMat:
                 else:
                     self.A[i].append(0)
                     self.A[i].append(0)
-            temp = self.productNumVec(-10000000, self.A[inx]) if self.isMax else self.productNumVec(10000000, self.A[inx])
-            self.c = self.addVec(self.c, temp)
+            temp = MatMethod.productNumVec(-10000000, self.A[inx]) if self.isMax else MatMethod.productNumVec(10000000, self.A[inx])
+            self.c = MatMethod.addVec(self.c, temp)
             self.z += -10000000 * self.b[inx] if self.isMax else 10000000 * self.b[inx]
             self.s[inx] = "="
     
@@ -133,15 +115,15 @@ class SimplexMat:
 
     def simplexPivot(self, row: int, col: int) -> None:
         self.b[row] *= 1/(self.A[row][col])
-        self.A[row] = self.productNumVec(1/(self.A[row][col]), self.A[row])
+        self.A[row] = MatMethod.productNumVec(1/(self.A[row][col]), self.A[row])
         for i in range(len(self.A)):
             if i != row:
                 self.b[i] -= self.A[i][col] * self.b[row]
-                minus = self.productNumVec(self.A[i][col], self.A[row])
-                self.A[i] = self.minusVec(self.A[i], minus)
+                minus = MatMethod.productNumVec(self.A[i][col], self.A[row])
+                self.A[i] = MatMethod.minusVec(self.A[i], minus)
         self.z -= self.c[col] * self.b[row]
-        minus = self.productNumVec(self.c[col], self.A[row])
-        self.c = self.minusVec(self.c, minus)
+        minus = MatMethod.productNumVec(self.c[col], self.A[row])
+        self.c = MatMethod.minusVec(self.c, minus)
     
     def checkFeasible(self) -> bool:
         for i in range(len(self.x)):
