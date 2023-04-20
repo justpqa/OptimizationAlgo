@@ -17,13 +17,10 @@ class InteriorMat:
         self.c = [[c] for c in vecc] # this is currently a column vector
         self.z = z
         self.x = vecx
-        self.res = [0] * len(self.x)
+        self.res = [[0] for i in len(self.x)]
         self.s = signvec
-        self.bounded = True
-        self.feasible = True
+        self.fandb = True
         self.isMax = 1 if isMax else 0
-        self.numSurplus = 0
-        self.numExcess = 0
     
     def standardize(self) -> None:
         if self.isMax:
@@ -101,7 +98,7 @@ class InteriorMat:
 
         return final 
     
-    def solveK(self): # solve after Karmarkarize the problem
+    def solveK(self) -> None: # solve after Karmarkarize the problem
         q = 100 # q = ?
         alpha = 1/4
         r = 1 / math.sqrt(self.numVar * (self.numVar - 1))
@@ -139,4 +136,16 @@ class InteriorMat:
             # z_new = 1 - alpha*r*(norm_p)
             # x_new = (1t*z_new)^{-1}Dz_new
                 
-        return mm.matmul(ct, x_new)[0][0]
+        if mm.matmul(ct, x_new)[0][0] == 0:
+            self.fandb = True
+            self.z = mm.matmul(ct, x_new)[0][0]
+            self.res = [x_new[i][0] for i in range(len(self.res))]
+        else:
+            self.fandb = False
+    
+    def getRes(self):
+        if not self.fandb:
+            print("The problem is either infeasible or unbounded.")
+        else:
+            for i in range(len(self.res)):
+                print(self.x[i] + ": " + str(self.res[i]))
