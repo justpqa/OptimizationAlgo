@@ -139,4 +139,4 @@ class InteriorMat:
             # z_new = 1 - alpha*r*(norm_p)
             # x_new = (1t*z_new)^{-1}Dz_new
                 
-        return 0
+        return mm.matmul(ct, x_new)[0][0]
