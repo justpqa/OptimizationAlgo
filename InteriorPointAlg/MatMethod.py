@@ -18,7 +18,7 @@ def minusVec(vec1: List[int], vec2: List[int]) -> List[int]:
         print("The size of two vector or the input of vector is having a problem.")
         return [0]
     
-def productNumMat(num: int, mat: List[List[int]]) -> List[int]:
+def productNumMat(num: float, mat: List[List[int]]) -> List[float]:
     return [[num*mat[i][j] for j in range(len(mat[0]))] for i in range(len(mat))]
 
 def addMat(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
