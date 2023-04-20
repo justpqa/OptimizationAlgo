@@ -5,7 +5,6 @@ from collections import Counter
 import MatMethod as mm
 import math
 from typing import List
-import numpy as np
 
 # currently I need to use numpy as many matrix multiplication need to be done for the interior method
 class InteriorMat:
@@ -110,9 +109,28 @@ class InteriorMat:
         x_new = self.res
         ct = mm.transpose(self.c)
         At = mm.transpose(self.A)
-        while mm.matmul(ct, x_new)[0][0] / mm.matmul(ct, self.x)[0][0] >= threshold:
+        ones_n = [[1] for i in range(len(self.res))]
+        while mm.matmul(ct, x_new)[0][0] / mm.matmul(ct, self.res)[0][0] >= threshold:
             D_new = mm.diag(self.res) 
             mid_big_term = D_new
+            mid_big_term = mm.matmul(mid_big_term, At)
+            chunk = mm.matmul(self.A, mm.matmul(D_new, mm.matmul(D_new, At)))
+            mid_big_term = mm.matmul(mid_big_term, mm.inverse(chunk))
+            mid_big_term = mm.matmul(mid_big_term, self.A)
+            mid_big_term = mm.matmul(mid_big_term, D_new)
+            left_term = mm.matmul(ones_n, mm.transpose(ones_n))
+            left_term = mm.productNumMat(1/len(self.res), left_term)
+            I = mm.identity(len(self.res))
+            p = mm.minusMat(I, mid_big_term)
+            p = mm.minusMat(p, left_term)
+            p = mm.matmul(p, D_new)
+            p = mm.matmul(p, ct)
+            norm_p = mm.normalize(p)
+            ones_p = [[1] for i in range(len(norm_p))]
+            z_new = mm.minusMat(ones_p, mm.productNumMat(-1*alpha*r, norm_p))
+            inv_chunk = mm.inverse(mm.matmul(mm.transpose(ones_p), z_new))
+            x_new = mm.matmul(inv_chunk, D_new)
+            x_new = mm.matmul(x_new, z_new)
             # need inverse function to continue
             # mid_big_term = DAt(AD^2At)^{-1}AD 
             # left_term = 1/n * 1_n * (1_n)T
