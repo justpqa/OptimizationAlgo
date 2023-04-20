@@ -3,7 +3,9 @@ from Input import InputtoLPMatrix
 
 def main():
     mat = InputtoLPMatrix()
-    mat.interiorPoint()
+    mat.standardize()
+    mat.Karmarkarize()
+    mat.solveK()
     mat.getRes()
 
 if __name__ == "__main__":
