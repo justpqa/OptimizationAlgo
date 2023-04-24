@@ -46,6 +46,13 @@ def matmul(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
         return [[0]]
     
 def vert_concat(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+    if len(mat1[0]) != len(mat2[0]):
+        print("The two matrix does not have the same number of columns. ")
+        return [[0]]
+    else:
+        return mat1 + mat2 # use list comprehension directly
+    
+def horz_concat(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
     if len(mat1) != len(mat2):
         print("The two matrix does not have the same number of rows. ")
         return [[0]]
@@ -55,13 +62,6 @@ def vert_concat(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]
         for i in range(m):
             res[i] = mat1[i] + mat2[i]
         return res
-    
-def horz_concat(mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
-    if len(mat1[0]) != len(mat2[0]):
-        print("The two matrix does not have the same number of columns. ")
-        return [[0]]
-    else:
-        return mat1 + mat2 # use list comprehension directly
 
 def identity(n: int) -> List[List[int]]:
     res = [[0 for j in range(n)] for i in range(n)]
@@ -113,3 +113,6 @@ def inverse(mat: List[List[int]]) -> List[List[int]]:
             return [[0]]
         else:
             return new_mat
+        
+def shape(mat: List[List[int]]):
+    print(str(len(mat)) + "*" + str(len(mat[0])))

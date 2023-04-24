@@ -17,7 +17,7 @@ class InteriorMat:
         self.c = [[c] for c in vecc] # this is currently a column vector
         self.z = z
         self.x = vecx
-        self.res = [[0] for i in len(self.x)]
+        self.res = [0] * len(self.x)
         self.s = signvec
         self.fandb = True
         self.isMax = 1 if isMax else 0
@@ -60,7 +60,7 @@ class InteriorMat:
         big_row_1 = ct
         big_row_1 = mm.horz_concat(big_row_1, mm.productNumMat(-1, bt))
         temp = mm.addMat(mm.productNumMat(-1, mm.matmul(ct, ones_n)), mm.matmul(bt, ones_m))
-        big_row_1 = mm.horz_concat(big_row_1, temp)
+        big_row_1 = mm.horz_concat(big_row_1, temp)   
         big_row_1 = mm.horz_concat(big_row_1, [[0]])
 
         big_row_2 = A
@@ -94,7 +94,7 @@ class InteriorMat:
         sign_u = ["=" for i in range(l)]
 
         final = InteriorMat(A_hat, b_hat, c_hat, u, sign_u, isMax = False)
-        final.res = [1 / l for i in range(2*l)]
+        final.res = res
 
         return final 
     
