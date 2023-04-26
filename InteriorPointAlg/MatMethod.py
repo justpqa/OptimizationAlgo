@@ -1,5 +1,6 @@
 from typing import List
 from copy import deepcopy
+import math
 
 def productNumVec(num: int, vec: List[int]) -> List[int]:
     return [num*vec[i] for i in range(len(vec))]
@@ -69,23 +70,23 @@ def identity(n: int) -> List[List[int]]:
         res[i][i] = 1
     return res
 
-def diag(vec: List[int]) -> List[List[int]]:
+def diag(vec: List[List[int]]) -> List[List[int]]:
     res = [[0 for j in range(len(vec))] for i in range(len(vec))]
     for i in range(len(vec)):
-        res[i][i] = vec[i]
+        res[i][i] = vec[i][0]
     return res
 
 def normalize(colVec: List[List[int]]):
     ss = 0
     for i in range(len(colVec)):
-        for num in colVec[i]:
-            ss += num**2
-    for i in range(len(colVec)):
-        for j in range(len(colVec[0])):
-            colVec[i][j] /= ss
-    return colVec
+        ss += colVec[i][0] ** 2
+    rss = math.sqrt(ss)
+    res = colVec
+    for i in range(len(res)):
+        res[i][0] /= rss
+    return res
 
-def inverse(mat: List[List[int]]) -> List[List[int]]:
+def inverse(mat: List[List[int]]):
     if len(mat) != len(mat[0]):
         print("Matrix need to be a square matrix.")
         return [[0]]
@@ -95,7 +96,7 @@ def inverse(mat: List[List[int]]) -> List[List[int]]:
         In = identity(n)
         indices = list(range(n)) # to allow flexible row referencing ***
         for fd in range(n): # fd stands for focus diagonal
-            fdScaler = 1.0 / mat[fd][fd]
+            fdScaler = 1.0 / new_mat[fd][fd]
             # FIRST: scale fd row with fd inverse. 
             for j in range(n): # Use j to indicate column looping.
                 new_mat[fd][j] *= fdScaler
@@ -108,11 +109,19 @@ def inverse(mat: List[List[int]]) -> List[List[int]]:
                     # cr - crScaler * fdRow, but one element at a time.
                     new_mat[i][j] = new_mat[i][j] - crScaler * new_mat[fd][j]
                     In[i][j] = In[i][j] - crScaler * In[fd][j]
-        if new_mat != identity(n):
-            print("The matrix does not have inverse.")
-            return [[0]]
-        else:
-            return new_mat
+        for i in range(n):
+            if abs(new_mat[i][i] - 1) > 0.01:
+                print("The matrix does not have inverse.")
+                return [[0]]
+            else:
+                new_mat[i][i] = 1
+        return new_mat
         
 def shape(mat: List[List[int]]):
     print(str(len(mat)) + "*" + str(len(mat[0])))
+
+def sumMat(mat: List[List[int]]):
+    total = 0
+    for i in range(len(mat)):
+        total += sum(mat[i])
+    return total
