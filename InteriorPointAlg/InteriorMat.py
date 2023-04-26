@@ -53,31 +53,33 @@ class InteriorMat:
         ones_n = [[1] for i in range(self.numVar)] # 1*n
 
         # make c_hat for our Karmarkar method
-        c_hat = [0 for i in range(2*l)]
-        c_hat[-2] = 1
+        c_hat = [0 for i in range(2*l-1)]
+        c_hat[-1] = 1
 
         # make A_hat for our Karmakar method (need to make 3 big row)
         big_row_1 = ct
         big_row_1 = mm.horz_concat(big_row_1, mm.productNumMat(-1, bt))
+        big_row_1 = mm.horz_concat(big_row_1, [[0 for i in range(self.numCon)]])
+        big_row_1 = mm.horz_concat(big_row_1, [[0 for i in range(self.numVar)]])
         temp = mm.addMat(mm.productNumMat(-1, mm.matmul(ct, ones_n)), mm.matmul(bt, ones_m))
         big_row_1 = mm.horz_concat(big_row_1, temp)   
-        big_row_1 = mm.horz_concat(big_row_1, [[0]])
+        # big_row_1 = mm.horz_concat(big_row_1, [[0]])
 
         big_row_2 = A
         big_row_2 = mm.horz_concat(big_row_2, [[0 for j in range(self.numCon)] for i in range(self.numCon)])
         big_row_2 = mm.horz_concat(big_row_2, Im)
         big_row_2 = mm.horz_concat(big_row_2, [[0 for j in range(self.numVar)] for i in range(self.numCon)])
-        temp = mm.minusMat(b, mm.productNumMat(-1, mm.matmul(A, ones_n)))
+        temp = mm.minusMat(b, mm.matmul(A, ones_n))
         big_row_2 = mm.horz_concat(big_row_2, temp)
-        big_row_2 = mm.horz_concat(big_row_2, mm.productNumMat(-1, b))
+        # big_row_2 = mm.horz_concat(big_row_2, mm.productNumMat(-1, b))
 
         big_row_3 = [[0 for j in range(self.numVar)] for i in range(self.numVar)]
         big_row_3 = mm.horz_concat(big_row_3, At)
         big_row_3 = mm.horz_concat(big_row_3, [[0 for j in range(self.numCon)] for i in range(self.numVar)])
         big_row_3 = mm.horz_concat(big_row_3, mm.productNumMat(-1, In))
-        temp = mm.minusMat(c, mm.productNumMat(-1, mm.matmul(At, ones_m)))
+        temp = mm.addMat(mm.minusMat(c,  mm.matmul(At, ones_m)), ones_n)
         big_row_3 = mm.horz_concat(big_row_3, temp)
-        big_row_3 = mm.horz_concat(big_row_3, mm.productNumMat(-1, c))
+        # big_row_3 = mm.horz_concat(big_row_3, mm.productNumMat(-1, c))
 
         A_hat = big_row_1
         A_hat = mm.vert_concat(A_hat, big_row_2)
@@ -87,8 +89,8 @@ class InteriorMat:
         b_hat = [0 for i in range(l)]
 
         # make initial u
-        u = ["u" + str(i) for i in range(1, 2*l+1)]
-        res = [1 / (l) for i in range(2*l)]
+        u = ["u" + str(i) for i in range(1, 2*l)]
+        res = [1/(2*l-1) for i in range(2*l-1)]
 
 
         sign_u = ["=" for i in range(l)]
@@ -99,43 +101,38 @@ class InteriorMat:
         return final 
     
     def solveK(self) -> None: # solve after Karmarkarize the problem
-        q = 100 # q = ?
         alpha = 1/4
-        r = 1 / math.sqrt(self.numVar * (self.numVar - 1))
-        threshold = 1 / 2**(-q)
-        x_new = self.res
+        r = math.sqrt(self.numVar /(self.numVar-1))
+        threshold = 10**(-100)
+        start_x = [[r] for r in self.res]
+        x_new = [[r] for r in self.res]
         ct = mm.transpose(self.c)
         At = mm.transpose(self.A)
         ones_n = [[1] for i in range(len(self.res))]
-        while mm.matmul(ct, x_new)[0][0] / mm.matmul(ct, self.res)[0][0] >= threshold:
-            D_new = mm.diag(self.res) 
-            mid_big_term = D_new
-            mid_big_term = mm.matmul(mid_big_term, At)
-            chunk = mm.matmul(self.A, mm.matmul(D_new, mm.matmul(D_new, At)))
-            mid_big_term = mm.matmul(mid_big_term, mm.inverse(chunk))
-            mid_big_term = mm.matmul(mid_big_term, self.A)
-            mid_big_term = mm.matmul(mid_big_term, D_new)
-            left_term = mm.matmul(ones_n, mm.transpose(ones_n))
-            left_term = mm.productNumMat(1/len(self.res), left_term)
-            I = mm.identity(len(self.res))
-            p = mm.minusMat(I, mid_big_term)
-            p = mm.minusMat(p, left_term)
-            p = mm.matmul(p, D_new)
-            p = mm.matmul(p, ct)
-            norm_p = mm.normalize(p)
-            ones_p = [[1] for i in range(len(norm_p))]
-            z_new = mm.minusMat(ones_p, mm.productNumMat(-1*alpha*r, norm_p))
-            inv_chunk = mm.inverse(mm.matmul(mm.transpose(ones_p), z_new))
-            x_new = mm.matmul(inv_chunk, D_new)
-            x_new = mm.matmul(x_new, z_new)
-            # need inverse function to continue
-            # mid_big_term = DAt(AD^2At)^{-1}AD 
-            # left_term = 1/n * 1_n * (1_n)T
-            # p = (I - mid_big_term - left_term)Dct
-            # norm_p = p / ||p||
-            # z_new = 1 - alpha*r*(norm_p)
-            # x_new = (1t*z_new)^{-1}Dz_new
-                
+        # print(mm.matmul(self.A, ones_n)) does not satisfy Ax = 0 for starting x
+        while mm.matmul(ct, x_new)[0][0] / mm.matmul(ct, start_x)[0][0] >= threshold:
+            D_new = mm.diag(x_new) 
+            # calculate p
+            # calculate middle part first
+            middle_part = mm.matmul(mm.matmul(mm.matmul(self.A, D_new), D_new), At)
+            middle_part = mm.inverse(middle_part)
+            middle_part = mm.matmul(mm.matmul(D_new, At), middle_part)
+            middle_part = mm.matmul(mm.matmul(middle_part, self.A), D_new)
+            # calculate left_part
+            left_part = mm.matmul(ones_n, mm.transpose(ones_n))
+            left_part = mm.productNumMat(1/self.numVar, left_part)
+            # calculate right_part
+            right_part = mm.identity(self.numVar)
+            # find p from 3 parts
+            p = mm.minusMat(right_part, middle_part)
+            p = mm.minusMat(p, left_part)
+            p = mm.matmul(mm.matmul(p, D_new), self.c)
+            p = mm.normalize(p)
+            z_new = mm.minusMat(ones_n, mm.productNumMat(alpha*r, p))
+            temp = mm.matmul(mm.matmul(mm.transpose(ones_n), D_new), z_new)
+            x_new = mm.matmul(mm.productNumMat(1/temp[0][0], D_new), z_new)
+        print(x_new)
+        # need another step to convert to original variable
         if mm.matmul(ct, x_new)[0][0] == 0:
             self.fandb = True
             self.z = mm.matmul(ct, x_new)[0][0]

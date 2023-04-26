@@ -6,7 +6,7 @@ def main():
     print("1st checkpoint")
     mat.standardize()
     print("2nd checkpoint")
-    mat.Karmarkarize()
+    mat = mat.Karmarkarize()
     print("3rd checkpoint")
     mat.solveK()
     print("4th checkpoint")
